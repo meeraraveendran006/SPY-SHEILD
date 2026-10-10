@@ -3,107 +3,505 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Spy Shield — Live Telemetry & EDR Guard</title>
+  <title>SPY SHIELD — Hardware Telemetry & EDR Guard</title>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #090d16;
-      --card: #111827;
-      --border: #1f2937;
-      --text: #f9fafb;
-      --subtext: #9ca3af;
-      --danger: #ef4444;
-      --safe: #10b981;
-      --blue: #3b82f6;
-      --warn: #f59e0b;
+      --bg: #0b0b0d;
+      --card: #141418;
+      --card-hover: #1c1c22;
+      --border: #282832;
+      --border-bright: #444452;
+      --text: #f4f4f7;
+      --muted: #858596;
+      --pink: #ff1b6b;
+      --pink-dim: rgba(255, 27, 107, 0.15);
+      --pink-glow: rgba(255, 27, 107, 0.5);
+      --white: #ffffff;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
-    body { background: var(--bg); color: var(--text); padding: 2rem 1.25rem; max-width: 980px; margin: auto; }
-    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem; margin-bottom: 2rem; }
-    .status-badge { font-size: 0.75rem; font-weight: 600; padding: 4px 12px; border-radius: 999px; background: #1e293b; color: var(--subtext); }
-    
-    .demo-bar { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
-    button { background: #1f2937; color: var(--text); border: 1px solid var(--border); padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: background 0.2s; }
-    button:hover { background: #374151; }
-    button.primary { background: var(--blue); border-color: var(--blue); }
-    button.kill-btn { background: var(--danger); border-color: var(--danger); margin-top: 0.75rem; display: none; font-weight: 600; }
-    button.kill-btn:hover { background: #dc2626; }
 
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; }
-    .card-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--subtext); margin-bottom: 0.5rem; }
-    .sensor-state { font-size: 1.4rem; font-weight: 700; }
-    .safe { color: var(--safe); }
-    .active-safe { color: var(--blue); animation: pulse 1.5s infinite; }
-    .active-danger { color: var(--danger); animation: pulse 1s infinite; }
-    .process-info { font-size: 0.85rem; color: var(--subtext); margin-top: 0.5rem; }
-    
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
-    .badge-safe { background: #064e3b; color: #6ee7b7; }
-    .badge-risk { background: #7f1d1d; color: #fca5a5; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    html {
+      scroll-behavior: smooth;
+    }
 
-    table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
-    th, td { text-align: left; padding: 12px 16px; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
-    th { background: #151e2e; color: var(--subtext); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
-    code { background: #030712; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; border: 1px solid #1f2937; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      background-image: 
+        radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0),
+        linear-gradient(180deg, rgba(255, 27, 107, 0.02) 0%, transparent 40%);
+      background-size: 20px 20px, 100% 100%;
+      overflow-x: hidden;
+    }
+
+    /* ----------------- HERO SECTION ----------------- */
+    .hero-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 3rem 2rem;
+      max-width: 1100px;
+      margin: auto;
+      border-left: 1px dashed var(--border);
+      border-right: 1px dashed var(--border);
+      position: relative;
+    }
+
+    .hero-meta-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    .hero-center {
+      text-align: center;
+      margin: auto 0;
+      padding: 2.5rem 0;
+    }
+
+    .hero-pretitle {
+      font-size: 0.8rem;
+      letter-spacing: 0.3em;
+      color: var(--pink);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: inline-block;
+      text-shadow: 0 0 12px var(--pink-glow);
+    }
+
+    .hero-title {
+      font-family: 'Permanent Marker', cursive, sans-serif;
+      font-size: clamp(3.5rem, 10vw, 8rem);
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      color: var(--white);
+      line-height: 0.95;
+      text-transform: uppercase;
+      text-shadow: 
+        4px 4px 0px var(--pink),
+        -1px -1px 0px rgba(255, 255, 255, 0.8);
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-desc {
+      max-width: 620px;
+      margin: 0 auto 2.5rem;
+      font-size: 0.95rem;
+      line-height: 1.8;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .hero-scroll-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: var(--pink);
+      color: var(--white);
+      padding: 14px 30px;
+      text-decoration: none;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid var(--pink);
+      box-shadow: 0px 0px 24px var(--pink-glow);
+      transition: all 0.2s ease-in-out;
+    }
+
+    .hero-scroll-btn:hover {
+      background: #ffffff;
+      color: #0b0b0d;
+      border-color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0px 0px 30px rgba(255, 255, 255, 0.4);
+    }
+
+    .hero-meta-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+      text-transform: uppercase;
+    }
+
+    /* ----------------- EDR CONSOLE ----------------- */
+    .console-section {
+      border-top: 2px solid var(--border);
+      background-color: var(--bg);
+      padding: 4.5rem 1.5rem 6rem;
+    }
+
+    .console-inner {
+      max-width: 1040px;
+      margin: auto;
+    }
+
+    .console-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .console-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--white);
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .edr-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border: 1px solid var(--pink);
+      color: var(--pink);
+      vertical-align: middle;
+      margin-left: 0.5rem;
+    }
+
+    .status-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border: 1px solid var(--border-bright);
+      background: var(--card);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .control-strip {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    button {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border-bright);
+      padding: 10px 18px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: all 0.15s ease-in-out;
+    }
+
+    button:hover {
+      background: var(--card-hover);
+      border-color: var(--white);
+      color: var(--white);
+    }
+
+    button.btn-primary {
+      border-color: var(--border-bright);
+      color: var(--white);
+    }
+
+    button.btn-primary:hover {
+      border-color: var(--white);
+    }
+
+    button.btn-danger-sim {
+      border-color: var(--pink);
+      color: var(--pink);
+      background: var(--pink-dim);
+    }
+
+    button.btn-danger-sim:hover {
+      background: var(--pink);
+      color: var(--white);
+      box-shadow: 0 0 16px var(--pink-glow);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 1.85rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 210px;
+      position: relative;
+      transition: border-color 0.2s ease;
+    }
+
+    .card:hover {
+      border-color: var(--border-bright);
+    }
+
+    .card-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .sensor-state {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+
+    .safe {
+      color: #a1a1aa;
+    }
+
+    .active-safe {
+      color: var(--white);
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+      animation: pulse 1.8s infinite;
+    }
+
+    .active-danger {
+      color: var(--pink);
+      text-shadow: 0 0 14px var(--pink-glow);
+      animation: pulse 0.9s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .process-info {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.75rem;
+      word-break: break-all;
+    }
+
+    .kill-btn {
+      display: none;
+      background: var(--pink);
+      color: var(--white);
+      border: 1px solid var(--pink);
+      margin-top: 1.25rem;
+      padding: 11px;
+      font-weight: 700;
+      text-align: center;
+      width: 100%;
+      letter-spacing: 0.08em;
+      box-shadow: 0 0 18px var(--pink-glow);
+    }
+
+    .kill-btn:hover {
+      background: #ff337e;
+      color: var(--white);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+    }
+
+    .badge-safe {
+      background: #27272a;
+      color: #e4e4e7;
+      border-color: #3f3f46;
+    }
+
+    .badge-risk {
+      background: var(--pink-dim);
+      color: var(--pink);
+      border-color: var(--pink);
+    }
+
+    .table-header-block {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.75rem;
+    }
+
+    .table-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--white);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+      border: 1px solid var(--border);
+    }
+
+    th, td {
+      text-align: left;
+      padding: 13px 15px;
+      font-size: 0.78rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: #111115;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.7rem;
+    }
+
+    tbody tr:hover {
+      background: var(--card-hover);
+    }
+
+    code {
+      background: #09090b;
+      padding: 3px 6px;
+      font-size: 0.75rem;
+      border: 1px solid var(--border);
+      color: var(--white);
+    }
   </style>
 </head>
 <body>
 
-  <header>
-    <div>
-      <h1>SPY SHIELD <span style="font-size: 0.75rem; color: var(--blue); border: 1px solid var(--blue); padding: 2px 6px; border-radius: 4px;">EDR MODE</span></h1>
-      <p style="font-size: 0.85rem; color: var(--subtext); margin-top: 4px;">Endpoint Hardware Telemetry & Remote Process Response</p>
+  <!-- FRONT COVER / HERO PAGE -->
+  <section class="hero-container">
+    <div class="hero-meta-top">
+      <span>SYS // SEC-PROTOCOL-41</span>
+      <span>ENDPOINT DETECTION & ACTIVE RESPONSE</span>
+      <span>SPEC: WIN-PERIPHERAL</span>
     </div>
-    <span class="status-badge" id="net-badge">CONNECTING</span>
-  </header>
 
-  <div class="demo-bar">
-    <button class="primary" onclick="simulateAccess('Camera', 'zoom.exe', 'AUTHORIZED')">Simulate Whitelisted (Zoom)</button>
-    <button class="primary" onclick="simulateAccess('Microphone', 'unknown_rat.exe', 'HIGH_RISK')" style="border-color: var(--danger); color: #fca5a5;">Simulate High-Risk (unknown_rat.exe)</button>
-    <button onclick="resetIdle()">Reset to Idle</button>
-  </div>
+    <div class="hero-center">
+      <div class="hero-pretitle">Autonomous Hardware Guard</div>
+      <h1 class="hero-title">SPY SHIELD</h1>
+      <p class="hero-desc">
+        Real-time endpoint hardware surveillance tracking unauthorized camera & microphone access. Continuous WinReg consent-polling, heuristic process whitelisting, and instantaneous process termination.
+      </p>
+      <a href="#console" class="hero-scroll-btn">Enter Telemetry Console ↓</a>
+    </div>
 
-  <div class="grid">
-    <!-- Camera Sensor -->
-    <div class="card">
-      <div>
-        <div class="card-label">Optical Sensor (Camera)</div>
-        <div id="cam-status" class="sensor-state safe">SECURE (IDLE)</div>
-        <div id="cam-proc" class="process-info">No active handle</div>
+    <div class="hero-meta-footer">
+      <span>STATE: ACTIVE DETECT</span>
+      <span>STANDALONE AGENT INTEGRATION</span>
+      <span>PORT: 5000</span>
+    </div>
+  </section>
+
+  <!-- LIVE EDR CONSOLE -->
+  <section class="console-section" id="console">
+    <div class="console-inner">
+
+      <div class="console-header">
+        <div>
+          <div class="console-title">Live Telemetry <span class="edr-pill">EDR 01</span></div>
+          <p style="font-size: 0.8rem; color: var(--muted); margin-top: 0.4rem; text-transform: uppercase; letter-spacing: 0.06em;">
+            Peripheral Handle Interception & Remote Process Defense
+          </p>
+        </div>
+        <span class="status-badge" id="net-badge">STREAMING</span>
       </div>
-      <button id="cam-kill" class="kill-btn" onclick="terminateActive('Camera')">⚡ Terminate Process</button>
-    </div>
 
-    <!-- Microphone Sensor -->
-    <div class="card">
-      <div>
-        <div class="card-label">Acoustic Sensor (Microphone)</div>
-        <div id="mic-status" class="sensor-state safe">SECURE (IDLE)</div>
-        <div id="mic-proc" class="process-info">No active handle</div>
+      <div class="control-strip">
+        <button class="btn-primary" style="border-color: var(--pink); color: var(--pink);" onclick="startDemoMode()">▶ Run Auto Demo</button>
+        <button class="btn-primary" onclick="simulateAccess('Camera', 'zoom.exe', 'AUTHORIZED')">Simulate Whitelisted</button>
+        <button class="btn-danger-sim" onclick="simulateAccess('Microphone', 'unknown_rat.exe', 'HIGH_RISK')">Simulate Rogue Binary</button>
+        <button onclick="resetIdle()">Reset to Secure</button>
       </div>
-      <button id="mic-kill" class="kill-btn" onclick="terminateActive('Microphone')">⚡ Terminate Process</button>
-    </div>
-  </div>
 
-  <h3 style="margin-bottom: 0.75rem; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em;">Forensic Access History</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Timestamp</th>
-        <th>Device</th>
-        <th>Process</th>
-        <th>Risk Tier</th>
-        <th>Status</th>
-        <th>Duration</th>
-      </tr>
-    </thead>
-    <tbody id="logs-table">
-      <tr><td colspan="6" style="text-align: center; color: var(--subtext);">Loading forensic audit trail...</td></tr>
-    </tbody>
-  </table>
+      <div class="grid">
+        <!-- Optical Sensor -->
+        <div class="card">
+          <div>
+            <div class="card-label">Hardware Sensor: Optical (Webcam)</div>
+            <div id="cam-status" class="sensor-state safe">SECURE (IDLE)</div>
+            <div id="cam-proc" class="process-info">No active handle</div>
+          </div>
+          <button id="cam-kill" class="kill-btn" onclick="terminateActive('Camera')">⚡ Terminate Process</button>
+        </div>
+
+        <!-- Acoustic Sensor -->
+        <div class="card">
+          <div>
+            <div class="card-label">Hardware Sensor: Acoustic (Microphone)</div>
+            <div id="mic-status" class="sensor-state safe">SECURE (IDLE)</div>
+            <div id="mic-proc" class="process-info">No active handle</div>
+          </div>
+          <button id="mic-kill" class="kill-btn" onclick="terminateActive('Microphone')">⚡ Terminate Process</button>
+        </div>
+      </div>
+
+      <div class="table-header-block">
+        <h3 class="table-title">Forensic Audit Stream</h3>
+        <span style="font-size: 0.7rem; color: var(--muted); text-transform: uppercase;">Registry Consent Log</span>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Device</th>
+            <th>Process</th>
+            <th>Risk Assessment</th>
+            <th>Status</th>
+            <th>Duration</th>
+          </tr>
+        </thead>
+        <tbody id="logs-table">
+          <tr><td colspan="6" style="text-align: center; color: var(--muted);">Polling telemetry history...</td></tr>
+        </tbody>
+      </table>
+
+    </div>
+  </section>
 
   <script>
     const socket = io();
@@ -111,13 +509,15 @@
     const activeProcesses = { Camera: null, Microphone: null };
 
     socket.on('connect', () => {
-      netBadge.innerText = 'ONLINE / STREAMING';
-      netBadge.style.color = 'var(--safe)';
+      netBadge.innerText = 'ONLINE / LIVE';
+      netBadge.style.borderColor = 'var(--white)';
+      netBadge.style.color = 'var(--white)';
     });
 
     socket.on('disconnect', () => {
       netBadge.innerText = 'OFFLINE';
-      netBadge.style.color = 'var(--danger)';
+      netBadge.style.borderColor = 'var(--pink)';
+      netBadge.style.color = 'var(--pink)';
     });
 
     socket.on('telemetry_update', (event) => {
@@ -136,7 +536,7 @@
         const isHighRisk = data.risk_tier === 'HIGH_RISK';
         
         statusEl.className = isHighRisk ? 'sensor-state active-danger' : 'sensor-state active-safe';
-        statusEl.innerText = isHighRisk ? 'ALERT: UNVERIFIED APP' : 'ALERT: IN USE';
+        statusEl.innerText = isHighRisk ? 'INTRUSION DETECTED' : 'HANDLE ENGAGED';
         procEl.innerHTML = `Process: <code>${data.process}</code> <span class="badge ${isHighRisk ? 'badge-risk' : 'badge-safe'}">${data.risk_tier}</span>`;
         killBtn.style.display = 'block';
       } else {
@@ -158,7 +558,7 @@
         <td><strong>${data.device}</strong></td>
         <td><code>${data.process}</code></td>
         <td><span class="badge ${isHighRisk ? 'badge-risk' : 'badge-safe'}">${data.risk_tier}</span></td>
-        <td style="color: ${data.status === 'ACTIVE' ? (isHighRisk ? 'var(--danger)' : 'var(--blue)') : 'var(--safe)'}; font-weight: 700;">${data.status}</td>
+        <td style="color: ${data.status === 'ACTIVE' ? (isHighRisk ? 'var(--pink)' : 'var(--white)') : 'var(--muted)'}; font-weight: 700;">${data.status}</td>
         <td>${data.duration || '0s'}</td>
       </tr>`;
       tbody.insertAdjacentHTML('afterbegin', row);
@@ -173,7 +573,7 @@
           tbody.innerHTML = '';
           items.forEach(insertAuditRow);
         } else {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--subtext);">No prior access records logged.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--muted);">No prior records captured.</td></tr>';
         }
       } catch (err) {
         console.error("Failed to fetch logs", err);
@@ -189,7 +589,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ process: proc })
       });
-      alert(`Termination command issued for: ${proc}`);
+      alert(`Termination dispatched for: ${proc}`);
     }
 
     function simulateAccess(device, process, risk) {
@@ -222,6 +622,28 @@
           })
         });
       });
+    }
+
+    // --- Recruiter / Portfolio Demo Mode Auto-Simulation ---
+    let demoInterval = null;
+
+    function startDemoMode() {
+      if (demoInterval) return;
+      alert("Demo Mode Activated! The dashboard will now automatically simulate live EDR telemetry events.");
+      
+      const demoEvents = [
+        { device: 'Camera', process: 'zoom.exe', risk: 'AUTHORIZED', status: 'ACTIVE' },
+        { device: 'Microphone', process: 'unknown_rat.exe', risk: 'HIGH_RISK', status: 'ACTIVE' },
+        { device: 'Camera', process: 'Microsoft.WindowsCamera', risk: 'AUTHORIZED', status: 'ACTIVE' },
+        { device: 'Microphone', process: 'discord.exe', risk: 'AUTHORIZED', status: 'ACTIVE' }
+      ];
+
+      let index = 0;
+      demoInterval = setInterval(() => {
+        const current = demoEvents[index % demoEvents.length];
+        simulateAccess(current.device, current.process, current.risk);
+        index++;
+      }, 4000);
     }
   </script>
 </body>
